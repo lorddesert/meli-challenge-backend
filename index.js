@@ -6,7 +6,7 @@ const API_URL = "https://api.mercadolibre.com"
 const ITEMS_LIMIT = 4 // MAX 50
 app.use(express.json())
 
-class StateFactory {
+class MemoryStateFactory {
     constructor(stateName, initialValue) {
         this[stateName] = initialValue
     }
@@ -20,7 +20,7 @@ class StateFactory {
     }
 }
 
-let user = new StateFactory("username", "")
+let user = new MemoryStateFactory("username", "")
 
 app.post("/register", (req, res) => {
     const { name, lastname } = req.body
