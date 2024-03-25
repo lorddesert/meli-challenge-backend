@@ -23,7 +23,6 @@ let user = new MemoryStateFactory("username", "")
 
 app.post("/api/register", (req, res) => {
   const { name, lastname } = req.body
-  console.log(req.body)
 
   user.setValue(`${name},${lastname}`)
   res.send(getUsername())
@@ -37,7 +36,25 @@ app.get("/", (req, res) => {
   res.send("Status OK")
 })
 
+app.use("/api/items/:id", async (req, res) => {
+
+  if (!req.params.id) {
+    res.status(400).send('Bad request, use format https://www.example.com/items:id ')
+  }
+
+  const itemResponse = await fetch(`${API_URL}/items/${req.params.id}`)
+  const item = await itemResponse.json()
+
+  const descriptionResponse = await fetch(`${API_URL}/items/${req.params.id}/description`)
+  const { text: description } = await descriptionResponse.json()
+  const categoriesResponse = await getCategories({ categoryID: item.category_id })
+  const { path_from_root: categories } = await categoriesResponse.json()
+
+  res.send(parseItemByID({ item, description, categories }))
+})
+
 app.get("/api/items", async (req, res) => {
+
   if (!req?.query?.q) {
     res.status(400).send("Bad request, use the format: '/api/items?q=' ")
   }
@@ -56,28 +73,11 @@ app.get("/api/items", async (req, res) => {
   const { path_from_root } = await categoriesResponse.json()
 
   const items = parseSearchResults({
-    data: results,
+    data: results.slice(0, 4),
     categories: path_from_root
   })
 
-  res.send(items)
-})
-
-app.get("/api/items/:id", async (req, res) => {
-
-  if (!req.params.id) {
-    res.status(400).send('Bad request, use format https://www.example.com/items:id ')
-  }
-
-  const itemResponse = await fetch(`${API_URL}/items/${req.params.id}`)
-  const item = await itemResponse.json()
-
-  const descriptionResponse = await fetch(`${API_URL}/items/${req.params.id}/description`)
-  const { text: description } = await descriptionResponse.json()
-  const categoriesResponse = await getCategories({ categoryID: item.category_id })
-  const { path_from_root: categories } = await categoriesResponse.json()
-
-  res.send(parseItemByID({ item, description, categories }))
+  return res.send(items)
 })
 
 
